@@ -1,0 +1,188 @@
+{
+    "title": "Setup for the menu of the restaurant.",
+    "header": "Daily_proba Values are set using the percentage of customers P(L) in the xls reference financial model.",
+    "description": "List of the menu items (eg. Bread, Salad, etc...), their prices, production cost and buying time distribution over 24h.",
+    "unit": "AUD",
+    "menu_items":{
+        "breakfast":{
+            "description": "Breakfasts. By definition, only on the morning hours.",
+            "price": 10,
+            "cost": 3,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[7, 10]
+            },
+            "Daily_proba": 0.50
+        },
+        "snacks_afternoon":{
+            "description": "snacks bought on the afternoon (no snack on mornings).",
+            "price": 10,
+            "cost": 3.5,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[11, 16]
+            },
+            "Daily_proba": 0.30
+        },
+        "snacks_evening":{
+            "description": "snacks bought on the evenings.",
+            "price": 10,
+            "cost": 3.5,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[16, 21]
+            },
+            "Daily_proba": 0.3
+        },
+        "starter_afternoon":{
+            "description": "starters taken between 11h and 16h (lunch time).",
+            "price": 15,
+            "cost": 5.25,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[11, 16]
+            },
+            "Daily_proba": 0.60
+        },
+        "starter_evening":{
+            "description": "starters taken between on evenings.",
+            "price": 15,
+            "cost": 5.25,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[16, 21]
+            },
+            "Daily_proba": 0.60
+        },
+        "main_afternoon":{
+            "description": "Main dish taken during lunch time (By definition, no main dish on morning).",
+            "price": 25,
+            "cost": 8.75,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[11, 16]
+            },
+            "Daily_proba": 0.15
+        },
+        "main_evening":{
+            "description": "Main dish bought on evenings.",
+            "price": 25,
+            "cost": 8.75,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[16, 21]
+            },
+            "Daily_proba": 0.15 
+        },
+        "dessert_morning":{
+            "description": "Dessert bought on mornings.",
+            "price": 15,
+            "cost": 4.5,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[7, 11]
+            },
+            "Daily_proba": 0.10
+        },
+        "dessert_afternoon":{
+            "description": "Dessert bought on afternoon.",
+            "price": 15,
+            "cost": 4.5,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[11, 16]
+            },
+            "Daily_proba": 0.08
+        },
+        "dessert_evening":{
+            "description": "Dessert bought on evening.",
+            "price": 15,
+            "cost": 4.5,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[16, 21]
+            },
+            "Daily_proba": 0.08
+        },
+        "coffee_tea_morning":{
+            "description": "Coffees or Tea taken during the mornings.",
+            "price": 4,
+            "cost": 1,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[7, 11]
+            },
+            "Daily_proba": 0.80
+        },
+        "coffee_tea_afternoon":{
+            "description": "Coffees or Tea taken during the lunch times.",
+            "price": 4,
+            "cost": 1,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[11, 16]
+            },
+            "Daily_proba": 0.60
+        },
+        "coffee_tea_evening":{
+            "description": "Coffees or Tea taken during the evenings.",
+            "price": 4,
+            "cost": 1,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[16, 21]
+            },
+            "Daily_proba": 0.60
+        },
+        "soft_drinks_morning":{
+            "description": "Soft drinks bought during the mornings.",
+            "price": 4,
+            "cost": 1,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[7, 11]
+            },
+            "Daily_proba": 0.60
+        },
+        "soft_drinks_afternoon":{
+            "description": "Soft drinks bought during the lunch times.",
+            "price": 4,
+            "cost": 1,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[11, 16]
+            },
+            "Daily_proba": 0.30
+        },
+        "soft_drinks_evening":{
+            "description": "Soft drinks bought during the evenings.",
+            "price": 4,
+            "cost": 1,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[16, 21]
+            },
+            "Daily_proba": 0.30
+        },
+        "alchool_afternoon":{
+            "description": "Alcoholic drinks bought during the lunch times (no alcoholic drinks on mornings).",
+            "price": 10,
+            "cost": 3,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[11, 16]
+            },
+            "Daily_proba": 0.30
+        },
+        "alchool_evening":{
+            "description": "Alcoholic drinks bought during the evenings.",
+            "price": 10,
+            "cost": 3,
+            "time_distribution":{
+                "name": "Uniform",
+                "params":[16, 21]
+            },
+            "Daily_proba": 0.30
+        }
+    }
+}

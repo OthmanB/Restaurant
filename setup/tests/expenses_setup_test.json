@@ -1,0 +1,93 @@
+{
+    "title": "Setup for the recuring and one-time expenses of the restaurant, excluding the food costs which are defined in the menu_setup files.",
+    "header": "Daily_proba Values are set using the percentage of customers P(L) in the xls reference financial model. \n Loss_fraction is the fraction of wasted food (mistakes, overproduction)",
+    "loss_fraction": 0.05,
+    "payment_fees":{
+        "description": "Fees applied to various transaction system (credit card, etc...). Fees are given in fraction of the client payement. Payement_proba gives the probability that a given mean is used",
+        "method":{
+            "cash":{
+                "fees":0,
+                "payement_proba":0.5
+            },
+            "credit_cards": {
+                "fees": 0.02,
+                "payement_proba": 0.5
+            }
+        }
+    }, 
+    "staff":{
+            "description": "List the expenses for each staff member. hourly_rate: in AUD. tax_rate: In fraction",
+            "tax_rate": 0.2,
+            "staff_list":{
+                "manager_1":{
+                    "remarks": "",
+                    "hourly_rate": 20,
+                    "working_hours": {
+                        "Monday": [],
+                        "Tuesday":[],
+                        "Wednesday":[],
+                        "Thursday":[],
+                        "Friday":[],
+                        "Saturday":[[7, 21]],
+                        "Sunday":[[7, 21]]
+                    }
+                },
+                "chef_1":{
+                    "remarks": "",
+                    "hourly_rate": 20,
+                    "working_hours": {
+                        "Monday": [],
+                        "Tuesday":[],
+                        "Wednesday":[],
+                        "Thursday":[],
+                        "Friday":[],
+                        "Saturday":[[7, 21]],
+                        "Sunday":[[7, 21]]
+                    }
+                },
+                "waiter_1":{
+                    "remarks": "",
+                    "hourly_rate": 20,
+                    "working_hours": {
+                        "Monday":[[7, 21]],
+                        "Tuesday":[[7, 21]],
+                        "Wednesday":[[7, 21]],
+                        "Thursday":[[7, 21]],
+                        "Friday":[[7, 21]],
+                        "Saturday":[],
+                        "Sunday":[]
+                    }
+                },
+                "waiter_2":{
+                    "remarks": "",
+                    "hourly_rate": 20,
+                    "working_hours": {
+                        "Monday": [],
+                        "Tuesday":[],
+                        "Wednesday":[],
+                        "Thursday":[],
+                        "Friday":[],
+                        "Saturday":[[7, 21]],
+                        "Sunday":[[7, 21]]
+                    }
+                }
+            }
+    },
+    "recurring":{
+        "description": "Recurring payements such as rent, normalised over the recurring_period",
+        "recuring_period": "month",
+        "recurring_list":{
+            "rent": 4940,
+            "bookkeeping":400,
+            "marketing":500,
+            "miscellaneous": 1500,
+            "software": 150,
+            "council": 133,
+            "strata": 600,
+            "gas": 417,
+            "electricity": 650,
+            "water": 650,
+            "waste":350
+        }
+    }
+}

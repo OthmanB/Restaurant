@@ -1,0 +1,43 @@
+{
+    "title": "Setup for the population that is potentially at reach of the restaurant",
+    "attractiveness": {
+            "header":" Parameters used to compute the attractiveness of the restaurant relative to competition. \n nr: Number of competitors within Reff. ",
+            "nr": 20,
+            "type": "dirac",
+            "err_nr": 4
+      },
+    "Nliving": {
+            "header":" Parameters used to compute the total population living within the area of influence of the restaurant",
+            "population_density": 442,
+            "effective_time_radius": 10,
+            "travel_speed": 4
+    },
+    "Ntransit": {
+        "header":" Parameters used to compute the total population transiting (eg. tourists) within the area of influence of the restaurant",
+        "Ntransit": 0
+    },
+    "Nworking": {
+            "header":" Parameters used to compute the total population working/studying within the area of influence of the restaurant. distance: in meters.",
+            "data": "https://profile.id.com.au/sydney/travel-to-work?BMID=25",
+            "places":{
+                "0":{ 
+                    "name": "Work Place",
+                    "distance": 500,
+                    "Nworkers": 0,
+                    "Commute_fraction": 0.15
+                    },
+                "1":{ 
+                    "name": "School place",
+                    "distance": 1200,
+                    "Nworkers": 0,
+                    "Commute_fraction": 0.15
+                },
+                "2":{ 
+                    "name": "School place 2",
+                    "distance": 500,
+                    "Nworkers": 0,
+                    "Commute_fraction": 0.15
+                }
+            }
+        }
+}

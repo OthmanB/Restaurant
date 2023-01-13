@@ -1,0 +1,92 @@
+{
+    "title": "Setup for the people behavior for each day of the week and for the yearly seasonal modulation",
+    "header": "reference: Refers to the maximum plage for competition and typical restaurants popularity \n restaurant: Refers to the parameters specific to the studied restaurant",
+    "model_resolution": 0.1,
+    "yearly_function":{
+        "header": "Parameters for the yearly function that modulates the number of clients over long time period (seasonal variations)",
+        "func": "default",
+        "params_names": ["Maximum Baseline", "Amplitude variation (in fraction [0,1])", "Period (in Years)", "Phase Offset (from 21 Dec)"],
+        "params": [1, 0.1, 1, -0.024657534246575342]
+    },
+    "reference": {
+            "Monday": {
+                "working_hours":[6, 22],
+                "daily_distributions": [
+                    [0.3333333, 8, 1], 
+                    [0.3333333, 12, 1], 
+                    [0.3333333, 18.5, 1]
+                ]
+            },
+              "Tuesday": {
+                "working_hours":[6, 22],
+                "daily_distributions": [
+                    [0.3333333, 8, 1], 
+                    [0.3333333, 12, 1], 
+                    [0.3333333, 18.5, 1]
+                ]
+            },
+              "Wednesday":{
+                "working_hours":[6, 22],
+                "daily_distributions": [
+                    [0.3333333, 8, 1], 
+                    [0.3333333, 12, 1], 
+                    [0.3333333, 18.5, 1]
+                ]
+            },
+              "Thursday":{
+                "working_hours":[6, 22],
+                "daily_distributions": [
+                    [0.25, 8, 1], 
+                    [0.25, 12, 1], 
+                    [0.5, 18.5, 1]
+                ]
+            },
+              "Friday": {
+                "working_hours":[6, 22],
+                "daily_distributions": [
+                    [0.21, 8, 1], 
+                    [0.21, 12, 1], 
+                    [0.58, 18.5, 1]
+                ]
+            },
+              "Saturday":{
+                "working_hours":[6, 22],
+                "daily_distributions": [
+                    [0.25, 8, 1], 
+                    [0.375, 12, 1],
+                    [0.375, 18.5, 1]
+                ]
+            },
+              "Sunday":{
+                "working_hours":[6, 22],
+                "daily_distributions": [
+                    [0.25, 8, 1], 
+                    [0.375, 12, 1], 
+                    [0.375, 18.5, 1]
+                ]
+            }
+      },
+      "restaurant": {
+            "Monday": {
+                "working_hours":[7,21]
+            },
+            "Tuesday": {
+                "working_hours":[7,21]
+            },
+            "Wednesday": {
+                "working_hours":[7,21]
+            },
+            "Thursday": {
+                "working_hours":[7,21]
+            },
+            "Friday": {
+                "working_hours":[7,21]
+            },
+            "Saturday": {
+                "working_hours":[7,14]
+            },
+            "Sunday": {
+                "working_hours":[7,14]
+            }
+    }
+  }
