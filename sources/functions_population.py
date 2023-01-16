@@ -243,6 +243,7 @@ def compute_Nc(behavior_setup, population_setup):
     A=A_fct(population_setup['attractiveness']['nr'])
     Reff=population_setup['Nliving']["effective_time_radius"]*population_setup['Nliving']["travel_speed"]/60. # Radius in km
     Nl=Nliving(population_setup['Nliving']['population_density'], Reff) # Density in Number/km^2
+    nvisits=population_setup["attractiveness"]["Nvisits_per_day"] # The average number of times a clients comes each day (eg. breakfast, dinner ==> nv=2)
     dist=[]
     Np=[]
     Np_living=[]
@@ -252,6 +253,6 @@ def compute_Nc(behavior_setup, population_setup):
         Np_living.append(population_setup["Nworking"]["places"][index]["Commute_fraction"]*population_setup["Nworking"]["places"][index]["Nworkers"])
     Nw=Nworking(Np, Np_living, dist, Reff) # Number of workers/students that may come (ONLY WEEK DAYS)
     Ntr=population_setup["Ntransit"]["Ntransit"] # Number of people transiting that may come
-    weekday_afluence=(Nl+Ntr)*WY_model_week*A
-    weekend_afluence=(Nl + Nw + Ntr)*WY_model_weekend*A
+    weekday_afluence=(Nl+Ntr)*WY_model_week*A*nvisits
+    weekend_afluence=(Nl + Nw + Ntr)*WY_model_weekend*A*nvisits
     return time, weekday_afluence, weekend_afluence # During the weekdays there is (Nl + Nw + Ntr) people. But only (Nl+Ntr) otherwise
