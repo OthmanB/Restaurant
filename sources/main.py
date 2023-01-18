@@ -77,34 +77,21 @@ def main(dir_data='../data/', test_menu_setup_file='../setup/tests/menu_setup_te
     time_day_Nc_weekday=time_day_Nc_weekday[:-1]
     time_day_Nc_weekend=time_day_Nc_weekend[:-1]
     Nc_day=Nc_day[:-1]
+    time_day=time_day_Nc # For compatibility due to changes between beta 0.1 and beta 0.2
     Dt=7 # Number of days in a week
     time_week_Nc, Nc_week=integrate(time_day_Nc, Nc_day, Dt)
     Dt=month_in_days # Average Number of days in a month
     time_month_Nc, Nc_month=integrate(time_day_Nc, Nc_day, Dt)  
-    '''
-    # Debug lines 
-    fig, ax = plt.subplots(1, figsize=(12, 6), num=1, clear=True)
-    ax2=ax.twinx()
-    ax.plot(time_hours, Nc_hours, label='Nc_hours', color='red')
-    ax2.plot(time_day_Nc*24, Nc_day/24, label='Nc_day', color='blue')
-    t_int_day, Nc_int_day=integrate(time_hours, Nc_hours, 24)
-    ax2.plot(t_int_day*24, Nc_int_day, color='green', marker='o')
-    ax.legend()
-    plt.show()
-    exit()
-    '''
     # ------------------------------------------------------------
     #
     # --- Compute the Revenues and expenses ---
-    # Daily Revenue/Expenses related to each sold goods
-    time_day, R_menu, E_menu, item_names=revenues_expenses_menuitem_matrix(menu_setup, time_hours, Nc_hours)
-    Ndays = len(time_day)
+    # FOR SIMPLICITY WE WILL ASSUME THAT MONDAY IS REPRESENTATIVE HERE... BUT THERE IS SOME REFACTORING REQUIRED HERE (eg. WEEK ENDS)
+    daily_work_hours=behavior_setup["restaurant"]["Monday"]["working_hours"][1] - behavior_setup["restaurant"]["Monday"]["working_hours"][0]
     # Total Revenues/Expenses for a day related to all sold goods
-    R_menu_day=np.zeros(Ndays)
-    E_menu_day=np.zeros(Ndays)
-    for i in range(len(menu_setup["menu_items"])):
-        R_menu_day=R_menu_day + R_menu[i,:]
-        E_menu_day=E_menu_day + E_menu[i,:]
+    # Arrays of all revenues and expenses for each combinations along with their associated service
+    R, E, Services, avail_services=daily_revenue_and_cost_menu_items_perclient(menu_setup)
+    #time_day, R_menu, E_menu, item_names=revenues_expenses_menuitem_matrix(menu_setup, time_hours, Nc_hours)
+    R_menu_day, E_menu_day=daily_revenues_expenses_menuitem(menu_setup, R, E, Services, avail_services, time_day, Nc_day,daily_work_hours)
     # The Weekly integrated revenues and expenses
     Dt=7 # Number of days in a week
     time_week, R_menu_week=sums(time_day, R_menu_day, Dt)
@@ -124,7 +111,7 @@ def main(dir_data='../data/', test_menu_setup_file='../setup/tests/menu_setup_te
     for staff in expenses_setup["staff"]["staff_list"]:
         E_staff_day=E_staff_day + expenses_staff(expenses_setup, staff, period=1)
         E_staff_week=E_staff_week + expenses_staff(expenses_setup, staff, period=7)
-        E_staff_month=E_staff_month + expenses_staff(expenses_setup, staff)
+        E_staff_month=E_staff_month + expenses_staff(expenses_setup, staff, period=month_in_days)
     # Recurent expenses normalised over periods of a day, week and month
     E_rec_day=expenses_recurent(expenses_setup, period=1)
     E_rec_week=expenses_recurent(expenses_setup, period=7)
@@ -133,52 +120,25 @@ def main(dir_data='../data/', test_menu_setup_file='../setup/tests/menu_setup_te
     E_tot_day = E_menu_day + E_staff_day + E_rec_day + E_fees_day
     E_tot_week = E_menu_week + E_staff_week + E_rec_week + E_fees_week
     E_tot_month= E_menu_month + E_staff_month + E_rec_month + E_fees_month
+    #print("E_staff_day: ", E_staff_day, "    E_staff_month: ", E_staff_month)
+    #print("R_menu_day:", R_menu_day, "   R_menu_month:", R_menu_month)
+    #print("Recurrent: ", E_rec_day, E_rec_month)
+    #exit()
     # -----------------------------------------
     #
     # --- Make all the plots ---
-    #
-    # Show all of the curves per item over the first week only
-    #
-    posOK=np.where(time_day < 7)[0]
-    for i in range(len(menu_setup["menu_items"])):
-        I = R_menu[i, posOK] - E_menu[i, posOK]
-        fig, ax_Nc, ax_ERI, ax_text=create_zones()
-        #ax_Nc.bar(time_day[posOK], Nc_day[posOK], label="Nc")
-        ax_Nc.bar(time_day[posOK], Nc_day_weekday[posOK], label="Nc_WD", color='blue')
-        ax_Nc.bar(time_day[posOK], Nc_day_weekend[posOK], label="Nc_WE", color='red')
-        #ax_Nc.legend(fontsize=use_fontsize)
-        for j in posOK:
-            ax_Nc.text(time_day[j], Nc_day[j]*0.5 , "{:.1f}".format(Nc_day[j]), horizontalalignment='center', fontsize=use_fontsize)
-        #fig, ax = plt.subplots(1, figsize=(12, 6), num=1, clear=True)
-        ax_ERI2 = ax_ERI.twinx()
-        ax_ERI2.tick_params(axis='y', labelsize=use_fontsize, direction="in") 
-        #ax_ERI.set_title(item_names[i])
-        ax_text.text(0.5, 0.95, item_names[i], transform=ax_text.transAxes, fontsize=use_fontsize, horizontalalignment='center')
-        ax_ERI.bar(time_day[posOK], R_menu[i, posOK], label="Revenues", color='blue') 
-        ax_ERI.bar(time_day[posOK], E_menu[i, posOK], label="Expenses", color='red') 
-        ax_ERI.legend(fontsize=use_fontsize)
-        ax_ERI.grid(axis = 'x')
-        ax_ERI.set_xticks(time_day[posOK], day_names)
-        ax_ERI.set_ylabel("Revenues & expenses  per items on WEEK 1 (" + menu_setup["unit"] + ")", fontsize=use_fontsize)
-        ax_ERI.set_xlabel("Time (days)", fontsize=use_fontsize)
-        #
-        ax_ERI2.plot(time_day[posOK], I, label="Revenues", color='green', marker="o") 
-        ax_ERI2.set_ylabel("Incomes  (" + menu_setup["unit"] + ")", fontsize=use_fontsize)
-        ax_ERI2.yaxis.label.set_color('green')
-        ax_ERI2.set_ylim(0, np.max(I)*1.1 )
-        ax_ERI2.tick_params(axis='y', colors='green')
-        fig.savefig(dir_out_menu_items + 'Fig_' + item_names[i] + '.jpg', dpi=300)
     #
     # Show the daily integrated revenue, expenses and incomes for each month of the year
     #
     k=-1
     for i in range(len(time_month)-1):
         posOK=np.where(np.bitwise_and(time_day >= i*month_in_days, time_day < (i+1)*month_in_days))[0]
-        I=R_menu_day[posOK] - E_menu_day[posOK]
+        I=R_menu_day[posOK] - E_tot_day[posOK]
         fig, ax_Nc, ax_ERI, ax_text=create_zones()
         #ax_Nc.bar(time_day[posOK], Nc_day[posOK], label="Nc")
         ax_Nc.bar(time_day[posOK], Nc_day_weekday[posOK], label="Nc_WD", color='blue')
         ax_Nc.bar(time_day[posOK], Nc_day_weekend[posOK], label="Nc_WE", color='red')
+        ax_Nc.set_ylabel('Nclients')
         #ax_Nc.legend(fontsize=use_fontsize)
         for j in posOK:
             ax_Nc.text(time_day[j], Nc_day[j]*0.3 , "{:.1f}".format(Nc_day[j]), horizontalalignment='center', fontsize=use_fontsize, rotation=90)
@@ -186,7 +146,8 @@ def main(dir_data='../data/', test_menu_setup_file='../setup/tests/menu_setup_te
         ax_ERI2 = ax_ERI.twinx()
         ax_ERI2.tick_params(axis='y', labelsize=use_fontsize, direction="in") 
         ax_ERI.bar(time_day[posOK], R_menu_day[posOK], label="Revenues", color='blue') 
-        ax_ERI.bar(time_day[posOK], E_menu_day[posOK], label="Expenses", color='red') 
+        ax_ERI.bar(time_day[posOK], E_tot_day[posOK], label="$E_{tot}$", color='orange') 
+        ax_ERI.bar(time_day[posOK], E_menu_day[posOK], label="$E_{menu}$", color='red') 
         ax_ERI.legend(fontsize=use_fontsize)
         #for j in range(0, int(np.floor(month_in_days)), 7):
         #    ax.axvline(x=np.min(time_day[posOK]) + j, color='gray')
@@ -209,23 +170,29 @@ def main(dir_data='../data/', test_menu_setup_file='../setup/tests/menu_setup_te
         fig.savefig(dir_out_monthly_summary + 'Fig_' + month_names[i] + '.jpg', dpi=300)
     #
     # Yearly summary
+    I_month=R_menu_month - E_tot_month
     fig, ax_Nc, ax_ERI, ax_text=create_zones()
     ax_Nc.bar(time_month, Nc_month, label="Nc")
+    ax_Nc.set_ylabel('Nclients')
     #ax_Nc.legend(fontsize=use_fontsize)
     for j in range(len(time_month)):
         ax_Nc.text(time_month[j], Nc_month[j]*0.3 , "{:.1f}".format(Nc_month[j]), horizontalalignment='center', fontsize=use_fontsize, rotation=90)
+        ax_ERI.text(time_month[j], R_menu_month[j],  "{:.1f}".format(R_menu_month[j]),horizontalalignment='center', fontsize=use_fontsize, rotation=90)
     #fig, ax = plt.subplots(1, figsize=(12, 6), num=1, clear=True)
     ax_ERI2 = ax_ERI.twinx()
     ax_ERI2.tick_params(axis='y', labelsize=use_fontsize, direction="in") 
     ax_ERI.bar(time_month, R_menu_month, label="Revenues", color='blue') 
-    ax_ERI.bar(time_month, E_menu_month, label="Expenses", color='red') 
-    ax_ERI.legend(fontsize=8)
+    ax_ERI.bar(time_month, E_tot_month, label="$E_{tot}$", color='orange') 
+    ax_ERI.bar(time_month, E_menu_month, label="$E_{Menu}$", color='red') 
+    ax_ERI.legend(fontsize=use_fontsize)
     ax_ERI.grid(axis = 'x')
-    ax_ERI2.plot(time_month, R_menu_month - E_menu_month, label="Revenues", color='green', marker="o") 
+    ax_ERI.set_ylim(0, np.max([np.max(R_menu_month), np.max(E_tot_month)])*1.2 )
+    #
+    ax_ERI2.plot(time_month, I_month, label="Revenues", color='green', marker="o") 
     ax_ERI.set_xticks([0, 1,2,3,4, 5, 6, 7, 8, 9, 10, 11], month_names)
     ax_ERI.set_ylabel("Revenues & expenses (" + menu_setup["unit"] + ")", fontsize=use_fontsize)
     ax_ERI.set_xlabel("Time (months)", fontsize=use_fontsize)
-    ax_ERI2.set_ylim(0, np.max(R_menu_month - E_menu_month)*1.1 )
+    ax_ERI2.set_ylim(0, np.max(I_month)*1.1 )
     ax_ERI2.set_ylabel("Incomes  (" + menu_setup["unit"] + ")", fontsize=use_fontsize)
     ax_ERI2.yaxis.label.set_color('green')
     ax_ERI2.tick_params(axis='y', colors='green', labelsize=use_fontsize)
@@ -239,7 +206,7 @@ main(dir_data='../data/', test_menu_setup_file='../setup/tests/menu_setup_test.j
         test_population_setup_file='../setup/tests/population_setup_test.json',
         test_expenses_setup_file='../setup/tests/expenses_setup_test.json')
 '''
-main(test_menu_setup_file='../setup/tests/menu_setup_R1.json',
-        test_behavior_setup_file='../setup/tests/behavior_setup_R1.json', 
-        test_population_setup_file='../setup/tests/population_setup_R1.json',
-        test_expenses_setup_file='../setup/tests/expenses_setup_R1.json')
+main(test_menu_setup_file='../setup/menu_setup_R1.json',
+        test_behavior_setup_file='../setup/behavior_setup_R1.json', 
+        test_population_setup_file='../setup/population_setup_R1.json',
+        test_expenses_setup_file='../setup/expenses_setup_R1.json')

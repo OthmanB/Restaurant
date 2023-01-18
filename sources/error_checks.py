@@ -1,6 +1,62 @@
 import numpy as np
 
-def check_period_is_modulo_1h(time, regular_dt=True):
+def check_time_is_24h(time, y=[]):
+    '''
+        Function that checks that the time is defined over 24h. 
+        Optionaly, it can check that another vector has the same size as time
+    '''
+    err_codes=[]
+    if np.max(time) - np.min(time) != 24:
+        print("Error in check_time_is_24h():  The time vector provides a time interval that is greater than 24h")
+        print("        This is not consistent with the mathematical definition of the tested function")
+        print("        Please ensure that you properly use the this function by setting max(time)-min(time) = 24")
+        print("        Currently max(time) - min(time) = ", np.max(time) - np.min(time))
+        #print("        The program will exit now")
+        err_codes.append('not_24h')
+    if y != []:
+        if len(y) != len(time):
+            print("Error in check_time_is_24h():  the time vector has not a consistent size with the optional y-vector")
+            print("        This is not consistent with the mathematical definition of the tested function")
+            print("        Please ensure that you properly use the code.")
+            print("        Currently len(time)={}     !=     len(y) = {}".format(len(time), len(y)))
+            #print("        The program will exit now")
+            err_codes.append('size_array_mismatch')
+    if len(err_codes) != 0:
+        return err_codes
+    else:
+        return [False]
+        
+def check_is_less_than(val, thld, strict=True):
+    '''
+        Check if a value is less than some other
+        val: Single value or array of values
+        thld: The threshold to compare with
+        strict: If True (default), evaluates val < thld. Otherwise, evaluates val <= thld
+    '''
+    err=False
+    try:
+        l=len(val)
+    except:
+        val=[val]
+    cpt=0
+    e=True
+    while e and cpt < len(val):
+        if strict:
+            e=(val[cpt]<thld)
+        else:
+            e=(val[cpt]<=thld)
+        if e == False:
+            err=True
+        cpt=cpt+1
+    if err == True:
+        print("Error in check_is_less_than(): Value found to be greater than the threshold")
+        print("     val: ", val)
+        print("     thld:", thld)
+        print("   strict:", strict)
+        err=True
+    return err
+
+def check_period_is_modulo_1(time, regular_dt=True):
     err_codes=[]
     if regular_dt == True:
         dt=time[1] - time[0]
@@ -49,15 +105,17 @@ def check_time_is_24h(time, y=[]):
         return err_codes
     else:
         return [False]
+ 
 
 def check_time_is_1y(time, y=[]):
     '''
         Function that checks that the time is defined over 1 year. 
         Optionaly, it can check that another vector has the same size as time
+        time: time in hours
     '''
     err_codes=[]
     if np.max(time) - np.min(time) != 24*365:
-        print("Error in check_time_is_24h():  The time vector provides a time interval that is greater than 24h")
+        print("Error in check_time_is_1y():  The time vector provides a time interval that is greater than 24h")
         print("        This is not consistent with the mathematical definition of the tested function")
         print("        Please ensure that you properly use the this function by setting max(time)-min(time) = 24")
         print("        Currently max(time) - min(time) = ", np.max(time) - np.min(time), " hours")
@@ -67,7 +125,7 @@ def check_time_is_1y(time, y=[]):
         err_codes.append('not_1y')
     if y != []:
         if len(y) != len(time):
-            print("Error in check_time_is_24h():  the time vector has not a consistent size with the optional y-vector")
+            print("Error in check_time_is_1d():  the time vector has not a consistent size with the optional y-vector")
             print("        This is not consistent with the mathematical definition of the tested function")
             print("        Please ensure that you properly use the code.")
             print("        Currently len(time)={}     !=     len(y) = {}".format(len(time), len(y)))

@@ -1,0 +1,107 @@
+{
+    "title": "Setup for the recuring and one-time expenses of the restaurant, excluding the food costs which are defined in the menu_setup files.",
+    "header": "Daily_proba Values are set using the percentage of customers P(L) in the xls reference financial model. \n Loss_fraction is the fraction of wasted food (mistakes, overproduction)",
+    "loss_fraction": "Not implemented yet. might be around 0.05",
+    "payment_fees":{
+        "description": "Fees applied to various transaction system (credit card, etc...). Fees are given in fraction of the client payement. Payement_proba gives the probability that a given mean is used",
+        "source": "https://www.rba.gov.au/publications/bulletin/2020/mar/consumer-payment-behaviour-in-australia.html",
+        "method":{
+            "cash":{
+                "fees":0,
+                "payement_proba":0.35
+            },
+            "cards": {
+                "fees": 0.02,
+                "payement_proba": 0.65
+            }
+        }
+    }, 
+    "staff":{
+            "description": "List the expenses for each staff member. hourly_rate: in AUD. tax_rate: In fraction",
+            "tax_rate": "Not used yet",
+            "staff_list":{
+                "manager_1":{
+                    "remarks": "",
+                    "hourly_rate": 22,
+                    "working_hours": {
+                        "Monday": [[11, 19]],
+                        "Tuesday":[[11, 19]],
+                        "Wednesday":[[11, 19]],
+                        "Thursday":[[11, 19]],
+                        "Friday":[[11, 19]],
+                        "Saturday":[[]],
+                        "Sunday":[[]]
+                    }
+                },
+                "chef_1":{
+                    "remarks": "Chef 1",
+                    "hourly_rate": 22,
+                    "working_hours": {
+                        "Monday": [[7, 21]],
+                        "Tuesday":[[7, 21]],
+                        "Wednesday":[[16, 21]],
+                        "Thursday":[[16, 21]],
+                        "Friday":[[16, 21]],
+                        "Saturday":[[]],
+                        "Sunday":[[]]
+                    }
+                },
+                "chef_2":{
+                    "remarks": "Chef 2",
+                    "hourly_rate": 22,
+                    "working_hours": {
+                        "Monday": [[11, 14]],
+                        "Tuesday":[[11, 14]],
+                        "Wednesday":[[7, 14]],
+                        "Thursday":[[7, 14]],
+                        "Friday":[[7, 14]],
+                        "Saturday":[[7,14]],
+                        "Sunday":[[7,14]]
+                    }
+                },
+                "waiter_1":{
+                    "remarks": "",
+                    "hourly_rate": 22,
+                    "working_hours": {
+                        "Monday": [[7, 21]],
+                        "Tuesday":[[7, 21]],
+                        "Wednesday":[[16, 21]],
+                        "Thursday":[[16, 21]],
+                        "Friday":[[16, 21]],
+                        "Saturday":[[]],
+                        "Sunday":[[]]
+                    }
+                },
+                "waiter_2":{
+                    "remarks": "waiter 2",
+                    "hourly_rate": 22,
+                    "working_hours": {
+                        "Monday": [[11, 14]],
+                        "Tuesday":[[11, 14]],
+                        "Wednesday":[[7, 14]],
+                        "Thursday":[[7, 14]],
+                        "Friday":[[7, 14]],
+                        "Saturday":[[7,14]],
+                        "Sunday":[[7,14]]
+                    }
+                }
+            }
+    },
+    "recurring":{
+        "description": "Recurring payements such as rent, normalised over the recurring_period",
+        "recuring_period": "month",
+        "recurring_list":{
+            "rent": 4940,
+            "bookkeeping":400,
+            "marketing":500,
+            "miscellaneous": 1500,
+            "software": 150,
+            "council": 133,
+            "strata": 600,
+            "gas": 417,
+            "electricity": 650,
+            "water": 650,
+            "waste":350
+        }
+    }
+}

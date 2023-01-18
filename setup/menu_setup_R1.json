@@ -1,0 +1,137 @@
+{
+    "title": "Setup for the menu of the restaurant.",
+    "header": "Daily_proba Values are set using the percentage of customers P(L) in the xls reference financial model.",
+    "description": "List of the menu items (eg. Bread, Salad, etc...), their prices, production cost and buying probability during the service time (daily_proba).",
+    "unit": "AUD",
+    "limit_by_service": true,
+    "service_list": ["breakfast", "lunch", "dinner"],
+    "service_time": [[7,11], [11,16], [16,21]],
+    "menu_items":{
+        "breakfast":{
+            "description": "Breakfasts. By definition, only on the morning hours.",
+            "service": "breakfast",
+            "price": 10,
+            "cost": 3,
+            "daily_proba": 0.30
+        },
+        "soft_drinks_morning":{
+            "description": "Soft drinks bought during the mornings.",
+            "service": "breakfast",
+            "price": 4,
+            "cost": 1,
+            "daily_proba": 0.10
+        },
+        "coffee_tea_morning":{
+            "description": "Coffees or Tea taken during the mornings.",
+            "service": "breakfast",
+            "price": 4,
+            "cost": 1,
+            "daily_proba": 0.90
+        },
+        "dessert_morning":{
+            "description": "Dessert bought on mornings.",
+            "service": "breakfast",
+            "price": 15,
+            "cost": 4.5,
+            "daily_proba": 0.04
+        },
+        "snacks_afternoon":{
+            "description": "snacks bought on the afternoon (no snack on mornings).",
+            "service": "lunch",
+            "price": 10,
+            "cost": 3.5,
+            "daily_proba": 0.30
+        },
+        "starter_afternoon":{
+            "description": "starters taken between 11h and 16h (lunch time).",
+            "service": "lunch",
+            "price": 15,
+            "cost": 5.25,
+            "daily_proba": 0.30
+        },
+        "main_afternoon":{
+            "description": "Main dish taken during lunch time (By definition, no main dish on morning).",
+            "service": "lunch",
+            "price": 25,
+            "cost": 8.75,
+            "daily_proba": 0.60
+        },
+        "dessert_afternoon":{
+            "description": "Dessert bought on afternoon.",
+            "service": "lunch",
+            "price": 15,
+            "cost": 4.5,
+            "daily_proba": 0.08
+        },
+        "coffee_tea_afternoon":{
+            "description": "Coffees or Tea taken during the lunch times.",
+            "service": "lunch",
+            "price": 4,
+            "cost": 1,
+            "daily_proba": 0.40
+        },
+        "soft_drinks_afternoon":{
+            "description": "Soft drinks bought during the lunch times.",
+            "service": "lunch",
+            "price": 4,
+            "cost": 1,
+            "daily_proba": 0.40
+        },
+        "alchool_afternoon":{
+            "description": "Alcoholic drinks bought during the lunch times (no alcoholic drinks on mornings).",
+            "service": "lunch",
+            "price": 10,
+            "cost": 3,
+            "daily_proba": 0.05
+        },
+        "snacks_evening":{
+            "description": "snacks bought on the evenings.",
+            "service": "dinner",
+            "price": 10,
+            "cost": 3.5,
+            "daily_proba": 0.30
+        },
+        "starter_evening":{
+            "description": "starters taken between on evenings.",
+            "service": "dinner",
+            "price": 15,
+            "cost": 5.25,
+            "daily_proba": 0.60
+        },
+        "main_evening":{
+            "description": "Main dish bought on evenings.",
+            "service": "dinner",
+            "price": 25,
+            "cost": 8.75,
+            "daily_proba": 0.15 
+        },
+        "dessert_evening":{
+            "description": "Dessert bought on evening.",
+            "service": "dinner",
+            "price": 15,
+            "cost": 4.5,
+            "daily_proba": 0.08
+        },
+        "coffee_tea_evening":{
+            "description": "Coffees or Tea taken during the evenings.",
+            "service": "dinner",
+            "price": 4,
+            "cost": 1,
+            "daily_proba": 0.05
+        },
+        "soft_drinks_evening":{
+            "description": "Soft drinks bought during the evenings.",
+            "service": "dinner",
+            "price": 4,
+            "cost": 1,
+            "daily_proba": 0.30
+        },
+        "alchool_evening":{
+            "description": "Alcoholic drinks bought during the evenings.",
+            "service": "dinner",
+            "price": 10,
+            "cost": 3,
+            "daily_proba": 0.30
+        }
+    }
+}
