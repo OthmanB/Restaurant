@@ -53,7 +53,7 @@ def integrate(t, y, Dt):
         t_new_i=t_new_i + 1
     return np.asarray(t_new, dtype=float), np.asarray(y_new, dtype=float)
 
-def step(list_input, k, result=[]):
+def step(list_input, k, result=None):
     '''
         Recursive function that is used to determine all of the combination of a 
         tree of combination between elements of a list
@@ -61,6 +61,8 @@ def step(list_input, k, result=[]):
         k: An index for the depth at which we compute the branches. k=0 is the root branch. k=len(list_input) are the leafs
         result: An array used for the recursion. At first execution, it must be empty []. At the end of the recursion, it has the results.
     '''
+    if result is None:
+        result=[]
     # last recursion
     if k == 0:
         return result

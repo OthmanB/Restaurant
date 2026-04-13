@@ -34,9 +34,7 @@ def time_distrib(x, name, params):
             r[pos_ok]=Norm
             return r
         case _:
-            print("Error: Unrecognized case for :", name ," inside time_distrib(). Debug Required.")
-            print("       The program will exit now")
-            exit()
+            raise ValueError(f"time_distrib(): unrecognized distribution name {name!r}")
 
 def unique_combination_items(menu_setup, debug=False, limit=7):
     '''
@@ -69,11 +67,9 @@ def unique_combination_items(menu_setup, debug=False, limit=7):
     if menu_setup["limit_by_service"] == False:
         err=check_is_less_than(len(names), limit, strict=False)
         if err == True:
-            print(" The number of combination will be too large to handle by python list")
-            print(" A more efficient computation language is required for lists of items greater than ", limit)
-            print(" Try to set limit_by_service = true in the Json configuration file")
-            print(" The program will exit the program")
-            exit()
+            raise ValueError(
+                f"unique_combination_items(): too many items for combinatorial expansion (count={len(names)}, limit={limit}). Consider setting limit_by_service=True."
+            )
         l=[]
         for i in range(len(names)):
             l.append([names[i], proba[i], price[i], cost[i], services[i]])
@@ -163,11 +159,11 @@ def daily_revenues_expenses_menuitem(menu_setup, R, E, Services, avail_services,
     '''
     # Verify that the user respect mathematical specifications
     err=check_period_is_modulo_1(time_day)
-    if avail_services != menu_setup["service_list"]:
-        print("Error: Unrecognized services found. There is a mismatch between the found services and the provided service list")
-        print("    available_service determined using each menu item:", avail_services)
-        print("    list of services provided in the Json configuration: ", menu_setup["service_list"])
-        exit()
+    if set(avail_services) != set(menu_setup["service_list"]):
+        raise ValueError(
+            "daily_revenues_expenses_menuitem(): mismatch between discovered services and configured service_list. "
+            f"discovered={avail_services}, configured={menu_setup['service_list']}"
+        )
     #
     # Perform the Sum to get the total daily revenu
     if menu_setup["limit_by_service"] == False: # THIS CASE ASSUME THAT ALL DISHES ARE SERVED ALL DAY LONG ==> Exposed population is Nc
@@ -274,7 +270,7 @@ def expenses_menuitem(menu_setup, item, time_hours, Nc, return_sale_distrib=Fals
         return E*Nc
 '''
 
-def expenses_fees(expenses_setup, Rpop, Nc):
+def expenses_fees(expenses_setup, Rpop, Nc, rng=None):
     '''
         Fees related to the method of payement
         We use a probabilistic description so that this is a random variable with probability 
@@ -287,23 +283,31 @@ def expenses_fees(expenses_setup, Rpop, Nc):
     probas=[] # Probability that client pick a given payment method
     fees=[] # Fees associated to each payment method
     for m in expenses_setup["payment_fees"]["method"]:
-        probas.append(expenses_setup["payment_fees"]["method"][m]["payement_proba"])
+        method_cfg = expenses_setup["payment_fees"]["method"][m]
+        payment_proba = method_cfg.get("payment_proba", method_cfg.get("payement_proba"))
+        if payment_proba is None:
+            raise ValueError(f"expenses_fees(): missing payment probability for method {m!r}")
+        probas.append(payment_proba)
         fees.append(expenses_setup["payment_fees"]["method"][m]["fees"])
-    if np.sum(probas) != 1:
-        print("Error: Improper normalisation of the variable 'payment_fees' within the expenses_setup variable.")
-        print("       Be sure that all probability sums to 1.")
-        print("       Debug required. The program will exit now.")
-        exit(-1)
+    if not np.isclose(np.sum(probas), 1.0):
+        raise ValueError(
+            f"expenses_fees(): invalid normalization of payment probabilities. Sum={np.sum(probas):.8f}, expected 1.0"
+        )
     #
     Nchoices=len(probas) # number of ways of paying (cash and credit card, etc...)
-    r=np.random.choice(Nchoices, p=probas) # pick random value
+    if rng is None:
+        r=np.random.choice(Nchoices, p=probas) # pick random value (legacy behavior)
+    else:
+        r=rng.choice(Nchoices, p=probas)
     E=np.zeros(len(Nc))
     for i in range(len(Nc)):
         # Calculates the overall fee incured at a given time using the probabilistic model
         # The greater the number of client, the more the noise is reduced by averaging: We tend towards the asymptotic probability
         Npicks=int(np.round(Nc[i]))
-        for k in range(Npicks):
-            Ef=Rpop[i]*fees[r]/Npicks 
+        Ef = 0
+        if Npicks > 0:
+            for k in range(Npicks):
+                Ef=Rpop[i]*fees[r]/Npicks
         E[i]=Ef
     return E
 

@@ -1,227 +1,552 @@
 \documentclass{article}
 
-%\usepackage{codespace}
-
-% Encodings
-\usepackage{eqnarray,amsmath,amssymb,gensymb,textcomp}
-
-% Better tables
-% Wide tables go to https://tex.stackexchange.com/q/332902
+\usepackage[margin=20mm,includeheadfoot]{geometry}
+\usepackage{amsmath,amssymb,gensymb,textcomp}
 \usepackage{array,multicol,multirow,siunitx,tabularx}
-
-% Better enum
 \usepackage{enumitem}
+\usepackage{graphicx,caption,float}
 
-% Graphics
-\usepackage{caption,float}
-
-% Allow setting >max< width of figure
-% 'export' allows adjustbox keys in \includegraphics
-\usepackage[export]{adjustbox}
-
-\title{Analytic stastical model for sales and expenses of a restaurant}
-\date{28 December 2022\\}
+\title{Analytical statistical model for restaurant demand, revenue, and expenses}
+\date{28 December 2022\\Revised theory -- consolidation draft}
 \author{Othman Benomar}
-
-% For demonstration purposes, remove in production
-%\usepackage{mwe}
-%% Configurations
-%\newcounter{memberrowno}
-%\setcounter{memberrowno}{0}
-
 
 \begin{document}
 \maketitle
-\section{Introduction} \label{sec:1} 
-The goal of these notes are to provide an analytical model describing how much a restaurant will get as benefits, based on a parametric description of the sales and of expenses. This work is motivated by the fact that while researching about how modeling of incomes and expenses should be performed in the academic literature, I could not find such simple parametric model. 
-Note that contrary to many academic studies available, this model does not involve Machine Learning for sales prediction. The sale model is exclusively a parametric model for which data are required to support its underlying assumptions (in particular choice of the distributions).
 
-A parametric model is important as it allows us to clearly expose assumptions and understand in a very general form what is to be expected as benefits from a restaurant. Due to this it does allow us to identify the potential point of failures in a business and enable us to prepare strategies to avoid those point of failures. Of course such a model requires to be confronted to the reality of the business and does not pretend to be detailled enough to provide a comprehensive guidance. It is merely a starting point that define a trajectory and allows us to explore different scenario of evolution of a business. 
-Once the restaurant has operated for months/years, more detailled data can certainly be available such that this model may be compared to these data to improve it (eg. identify false assumptions) and a machine-learning approach (trained on the historical data) may then be used to provide a more precise short-term predictive model.
+\begin{abstract}
+This document proposes a parametric model for restaurant demand, revenue, expenses, and profit. The purpose is not to replace data analysis or machine learning, but to provide a transparent analytical reference framework whose assumptions are explicit and whose parameters can later be calibrated against observations. The presentation deliberately starts from the most general formulation, then introduces practical simplifications that keep the model analytically manageable, and finally ends with worked examples. The resulting theory is meant to be strong enough to guide later quantitative developments.
+\end{abstract}
 
+\section{Introduction}
+\label{sec:introduction}
 
-\section{Theory} \label{sec:2}
+The goal of these notes is to provide an analytical model for the expected financial behavior of a restaurant, starting from a description of the accessible population, the temporal structure of demand, the menu, and the expense model.
 
-    \subsection{Population reservoir} \label{sec:2:1}
-A restaurant may see income from a population base $P_{living}$ that may be living in its surrounding, or may be non-residents such as passing-buy (eg. tourists), students or workers, noted hereafter $P_{transit}(t)$, $P_{working}(t)$, respectively.  The non-resident populations being a non-steady population, a time-dependence has to be accounted for.
-One can then consider that the total reservoir of people potentially eating at the restaurant will be,
-\begin{equation} \label{eq:Ntot}
-    N_{tot} = N_{living} + N_{transit} + N_{working}.
-\end{equation}
-However, not all of these people will be interested in the restaurant, so that there is a factor of attractiveness related to for example, quality of the food, the type of food and the potential competition. To account for this, we need to consider an {\it attractiveness factor} $A \in [0,1]$. Here 0 stands for not attractive at all (no people comes in the restaurant) to 1, (everyone eats everyday at the restaurant. This atractiveness can be viewed as a probability that a person comes within the restaurant at any given time.   
+The present document does not use machine learning for prediction. Instead, it describes a structured parametric model whose ingredients can later be estimated, challenged, or refined from data. This is useful for early-stage exploration because it exposes the points where the business is most sensitive: catchment size, competition, service timing, basket composition, and recurring costs. If proven sufficient, this can also serve as a base for training ML predicive models such that one may get forecasts in near real time.
 
-For simplicity, we will assume that all of the population coming within reach of the restaurant has an equivalent expectation regarding the food of the restaurant and this expectation does not vary in time. In reality, this is obviously more complex as factors such as age, taste preference and feedback loops (eg. newcomers vs returning customers) may play on this dynamic of attractiveness.
-In overall and at first approximation, one can then estimate that the maximum number of customers that can be achieved at any given time will be,
-\begin{equation} \label{eq:Nmax}
-    N_{c} (t) = A N_{tot} (t).
-\end{equation}
-Regarding A, one of the major constrain that exists is that each person is limited by the amount it can eat each day, so that if there is too many restaurant of equal quality and value within a given area, the population will be 'diluted' among all those restaurants at breakfast/lunch/dinner time. All other factors appart, this gives in fact a conservative upper limit to the possible value of A, provided that there exist $n_r$ competitors. This translates into two relations,
-\begin{eqnarray}
-    \sum^{n_r}_i A_i &=& 1, \\
-     A &\simeq&  \frac{1}{n_r+1}. 
-\end{eqnarray}
+The document follows three recurring levels. A general form, with weak assumptions and broad interpretability.
+Follows a practical reference model, chosen so that the model remains analytically and numerically manageable. Then we present worked examples, used as a pedagogical case first and as a richer near-implementation case second.
 
-    \subsection{Quantifying $N_{living}$, $N_{transit}$, $N_{working}$} \label{sec:2:2}
+The model aims at expected values over a planning horizon. It is therefore suited to scenario analysis, parameter sensitivity, and the construction of reproducible examples. It is not a stochastic queueing model, and it does not attempt to predict short-term shocks, weather anomalies, or operational disruptions unless such effects are introduced explicitly as extra factors.
 
-This section addresses how we can explicit the terms of equation \ref{eq:Ntot}. More specifically, we are interested in the maximum number of customers that may come at the restaurant in function of the overall population that live, study and work in the surroundings of the restaurant. 
-Note that here, time-dependences are not considered as we look only for the maximum capacity of the reservoir of people. The time-dependence will be addressed in section \ref{sec:2:3}
+The reference theory intentionally remains compact. It ignores many second-order effects, such as social-network feedback, inventory constraints, dynamic pricing, endogenous waiting times, and stockout behavior. These are natural future extensions rather than part of the reference model.
 
-Let's first consider the case of $N_{living}$.  We will consider that the restaurant is within an area with a population density $\rho$. A person living far from the restaurant is less likely to having a meal in it, mostly due to the time to get to the place which acts as a barrier and due to competitors that may be closer and thus more attractive. To describe this effect and by analogy to particle physics, let's define the area of influence $I(r, \theta)$ of the restaurant, that depends to the radial distance to the restaurant $r \in [0, \infty[$ and to the angular direction $\theta \in [0, 2\pi]$.  The potential number of people living in the area of influence that may buy the restaurant food is,
-\begin{equation} \label{eq:Nliving}
-    N_{living} = \int^{\infty}_{0}\int^{2\pi}_{0} \rho \, r\, I(r, \theta) dr d\theta.
-\end{equation}
-This relation is valid for any time of the day, as people living in the area constitute a permanent reservoir of people succeptible to buy food in the restaurant for the whole opening hours of the restaurant. 
+\section{Theory: from general form to practical model}
+\label{sec:theory}
 
-In the general case, roads will increase the capacity of transport and thus $I(r, \theta)$ is a function heavily dependent on the terrain. 
-For the sake of simplicity and because we only consider a parametric model for which data can easily described using analytical functions, we will here consider a purely circular zone of influence, independent on $\theta$ and only depending on the radial distance to the restaurant. The function $I(r, \theta) := I(r)$ has to be chosen as a monotonically decreasing function of $r$. In our model, we choose a Gaussian function that peaks at $I(r=0) : = 1$,
-\begin{equation} \label{eq:Ir}
-    I(r) = \frac{1}{e^{0}} e^{-r^2/2 R_{\mathrm{eff}^2}},
-\end{equation}
-with $e^0$ ensuring the proper normalisation and $R_{\mathrm{eff},l}$ the effective radius.
+\subsection{Notation, units, and modeling conventions}
+\label{sec:notation}
 
-In that specific case, equation \ref{eq:Nliving} leads to,
+Table \ref{tab:notation} defines the main symbols used throughout the document. One important convention is fixed immediately: \( N_c(t) \) denotes an expected customer arrival rate, with units of persons per unit time, rather than an instantaneous headcount. This choice is necessary because revenue and expense aggregates are obtained by integrating over time.
+
+\begin{table}[H]
+\centering
+\caption{Core notation used in the revised theory.}
+\label{tab:notation}
+\begin{tabularx}{\linewidth}{|p{2.5cm}|p{2.7cm}|X|}
+\hline
+Symbol & Units & Meaning \\
+\hline
+\( N_g(t) \) & persons & Accessible population in group \( g \), with \( g \) in \( \{l,w,tr\} \) for local residents, workers/students, and transit. \\
+\hline
+\( N_{tot}(t) \) & persons & Total accessible population reservoir, equal to the sum of the group populations. \\
+\hline
+\( N_c(t) \) & persons / hour & Expected customer arrival rate. In a time bin \( \Delta t \), the expected number of clients is approximately \( N_c(t) \Delta t \). \\
+\hline
+\( A_g(t) \) & dimensionless & Attractiveness / conversion factor for group \( g \). In the general theory it is factorized into interpretable components. \\
+\hline
+\( I_g(r,\theta) \) & dimensionless & Spatial influence kernel describing the fraction of a population at distance \( r \) and direction \( \theta \) that can reasonably reach the restaurant. \\
+\hline
+\( R_{\mathrm{eff},g} \) & km & Effective radius associated with the spatial influence kernel of group \( g \). \\
+\hline
+\( S_{\mathrm{eff},g} \) & km\( ^2 \) & Effective area associated with the chosen influence kernel. \\
+\hline
+\( D_g(\tau_d) \) & 1 / hour & Daily arrival kernel for group \( g \). It carries the rate interpretation in the reference model. \\
+\hline
+\( W_g(\tau_w) \), \( Y_g(\tau_y) \) & dimensionless & Weekly and yearly envelopes for group \( g \). They modulate the daily kernel. \\
+\hline
+\( \Pi(\mathbf{n}|t) \) & PMF & Probability mass function of customer baskets \( \mathbf{n} = (n_L)_L \) conditional on an arrival at time \( t \). \\
+\hline
+\( \bar{p}(t) \) & currency units / customer & Expected spend per arriving customer at time \( t \). \\
+\hline
+\( \bar{c}(t) \) & currency units / customer & Expected production cost per arriving customer at time \( t \). \\
+\hline
+\( \mathcal{R}(\Delta t) \) & currency & Total expected revenue over a horizon \( \Delta t \). \\
+\hline
+\( E_{\mathrm{tot}}(\Delta t) \) & currency & Total expected expenses over the same horizon. \\
+\hline
+\( \mathcal{I}(\Delta t) \) & currency & Expected income / profit, defined as revenue minus total expenses. \\
+\hline
+\( M_g(t) \) & h\( ^{-1} \) & General temporal modulation used before the separable reference form is introduced. \\
+\hline
+\( p_L, c_L \) & currency units & Unit price and unit production cost of menu item \( L \). \\
+\hline
+\( n_r \) & count & Number of competitor restaurants in the equal-quality competition limit. \\
+\hline
+\( \alpha_m(t), f_m \) & dimensionless & Payment-method probability and fee fraction for method \( m \). \\
+\hline
+\( \phi_i \) & dimensionless & Commute-overlap fraction used in the practical de-duplication term for work site \( i \). \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Compact summary of the main assumptions.}
+\label{tab:baseline-assumptions}
+\begin{tabularx}{\linewidth}{|p{3.2cm}|X|}
+\hline
+Choice & main assumption \\
+\hline
+Attractiveness & Factorized into interpretable terms, then reduced to time-constant effective factors in the reference model. \\
+\hline
+Spatial reach & Gaussian radial kernel with peak normalization and effective area \( S_{\mathrm{eff}} = 2\pi R_{\mathrm{eff}}^2 \). \\
+\hline
+Temporal structure & Separable daily, weekly, and yearly modulation. \( D \) carries units; \( W \) and \( Y \) are mean-one envelopes. \\
+\hline
+Purchase model & Multi-item basket model in general, reduced to practical item-level probabilities when needed. \\
+\hline
+Expenses & Production, fees, recurring, staff, and fixed or one-time costs all remain explicit in the general model. \\
+\hline
+Study cases & Pedagogical example first, richer example second, with transit kept as an explicit limit-case sensitivity. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{General population reservoir and customer flow}
+\label{sec:population-general}
+
+Let \( \mathcal{G} = \{l,w,tr\} \) denote the set of population groups: local residents, workers or students, and transit populations. The most general decomposition of the accessible population is
 \begin{equation}
-    N_{living} = \frac{2\pi}{e^0} R_{\mathrm{eff},l}^2 \, \rho = \rho \, S_{\mathrm{eff},l},
+\label{eq:Ntot-general}
+    N_{tot}(t) = \sum_{g \in \mathcal{G}} N_g(t).
 \end{equation}
-with $S_{\mathrm{eff},l} = 2\pi R_{\mathrm{eff},l}^2 / e^0$, the effective reaching surface of the population.
 
-Regarding $N_{working}$, the modeling is different because what is important is the radial distance between the location of the working place $r_0$ and the restaurant. In principle, the working population that can reach the restaurant will also depend on some cross-section between the students direction of difusivity (eg, assuming they go in all directions at lunch time) and the effective reaching surface of the restaurant. Note that the population of workers may also have different time constraints (their timeslot for eating is limited) than the living population such that in the general case, a different effective surface $S_{\mathrm{eff},w}$ should be defined, with $S_{\mathrm{eff},w} < S_{\mathrm{eff},l}$. But this effect is here neglected and we will assume further  $S_{\mathrm{eff},w} \simeq S_{\mathrm{eff},l} = S_{\mathrm{eff}}$. 
-
-We will focus on a simple parametric model that consider a working place as a point-source reservoir from which only a fraction of workers/students may potentially reach the restaurant,
-\begin{equation} \label{eq:Nwork}
-    N_{working} = \sum^{n_w}_i (N_{w,i} - N^{0}_{w,i}) I(r_i),
-\end{equation}
-with $N_{w,i}$, the total quantity of workers at a given working place $i$ and $ N^{0}_{w,i}$ the workers/students that are living within the effective reaching surface $S_{\mathrm{eff}}$ (to avoid to count people that do not need to commute). Here, $I(r_i)$ is the influence factor given by equation \ref{eq:Ir} for $r=r_i$, the radial distance between the restaurant and the working place. As multiple working places may exists within $S_{\mathrm{eff}}$, the total potential number of person is as many times bigger than the number of working places $n_w$.
-
-It is worth noting that accounting for $N_{working}$ is only relevant when no canteen is available to those populations. Otherwise, a conservative estimate is to set these to 0 because a canteen is generally subventionned by the company and therefore much cheaper than restaurants. Anyway in Australia, canteen are extremely rare to my knowledge.
-
-Regarding the transiting population, this could be an important parameter if one consider highly touristic places (eg. beaches, city centers with large transit hubs), but it is certainly negligible in most other places. The location of the restaurant will be assumed here to be in a non-touristic area, such that $N_{transit} = 0$.
-
-
-    \subsection{Daily, weekly and seasonal patterns} \label{sec:2:3}
-The population behavior depends on many factors that are related to social habits and by external factors such as the weather. 
-In the following, we will attempt to model the average behavior assuming that it is the superimposition of effects hapening at three recurring timescales: yearly, weekly and daily.
-
-Seasonal and weather effects are important to account for as they will control the propension of people to get outside and to get far from their location, whether this location is their appartement, school or working place. Furthermore, public holidays, week ends, working days cannot be threated equally. For example, on the week ends, the working/student population drops to a negligible value. Finally people are usually taking three meals per day, which will correspond to afluence peaks. From all these observations, we can obviously consider that the equation \ref{eq:Ntot} will be modulated by those factors acting at different timescales leading to the final population $N_c(t)$ reaching the restaurant for a meal at any given time,
-\begin{equation} \label{eq:Nc}
-    N_c(t) = A N_{tot} W(t) Y(t),
-\end{equation}
-with $W(t)$ and $Y(t)$ the weekly and yearly pattern, respectively. As such, these are defined on $[0, 1w]$ and $[0,1y]$ respectively. 
-
-TO DO:
-\begin{itemize}
-    \item Explain how and why I construct the weekly pattern using a daily template of gaussian functions
-    \item Explain how and why I construct the yearly pattern
-    \item Detail the normalisation conditions on the weekly pattern
-\end{itemize}
-
-\section{The menu as a source of sales}
-
-This part will address how mathematically a menu can be described. A menu is defined as an ensemble of products to sale $L$, at price ${p}$. Each of the products in the menu does not have the same probability of being bought as some may be more popular than others. Furthermore, a time dependence is also to be expected as for example, elements of the menu associated to the breakfast will likely be more bought on the morning than at other times\footnote{The restaurant may even imposes itself three different menus, for the breakfast, lunch and dinner.}. From this we will define the conditional probability of a menu item to be bought as $\mathcal{P}(t|L)$.
-Then, the average\footnote{Because we deal with a probability here, day-to-day fluctuations can obviously happen, even if this probabilistic model is exact.} revenue generated by a menu item $L$ at a time $t$ is given by the Bayes rule,
+The total population reservoir is not yet the customer flow. A second layer is needed to describe how the accessible population converts into arrivals. We therefore introduce a group-dependent attractiveness factor \( A_g(t) \), and a general temporal modulation \( M_g(t) \) with units of inverse time. The expected customer arrival rate is then
 \begin{equation}
-    R(t | L) \propto p(L) \mathcal{P}(t|L), \, \forall t \in \mathrm{[0,24h]}.
+\label{eq:Nc-general}
+    N_c(t) = \sum_{g \in \mathcal{G}} N_g(t) A_g(t) M_g(t).
 \end{equation}
-Here, we ignore the normlisation constant as it is only useful for model comparison, which is out of the scope of this study.
-Note that we define this over a single day as the various probabilities are assumed to be for the daily behavior. In other words, it is assumed that the customer behavior is independent of the time of the year. This may not be entirely true for all menus as most of us will want heavier and warmer meals on winter than on summer. Accounting for this seasonal variability of the buying probability is not impossible but would significantly complexify the model while not having data to accurately define the yearly trend. 
 
-Finally by definition, all clients buy at least one item (we exclude poeple that enter the shop and leave without buying) in the menu over the course of the day which brings the relation,
+This distinction is essential. The quantities \( N_g(t) \) and \( N_{tot}(t) \) are counts of potentially reachable people, whereas \( N_c(t) \) is a rate of arrivals. The model is easier to interpret when this distinction is made explicit from the outset.
+
+\paragraph{Factorized attractiveness.}
+In the general theory, attractiveness should not be treated as a single opaque scalar. It is more informative to write it as a product of interpretable factors,
 \begin{equation}
-    \sum^{L_{max}}_L \int^{24h}_{0h}\mathcal{P}(t|L) \, dt \ge 1.
+\label{eq:A-factorized}
+    A_g(t) = \prod_{m=1}^{M_g} A_g^{(m)}(t), \qquad 0 \leq A_g^{(m)}(t) \leq 1.
 \end{equation}
-Note also that some menu items can be unpopular/popular such that appart from being bounded by probability $\in[0,1]$, there is no specific restrictions regarding the probability that an item $L$ is bought over the course of a whole day. In other words, an unpopular item can have $\int^{24h}_{0h}\mathcal{P}(t|L) \, dt = 0$ while a very popular item may have $\int^{24h}_{0h}\mathcal{P}(t|L) \, dt= 1$.
+Typical components may encode competition, visibility, offer fit, affordability, reputation, and convenience. The main simplification is to assume approximate orthogonality between these factors so that the product remains compact. In pedagogical examples or first implementations, this factorized expression can be reduced to a single effective factor \( A_g \) or even to a single shared \( A \).
 
-A study case will be given in section \ref{sec:6}, using a simplified menu representation.
-
-\section{Expected revenues} \label{sec:4}
-
-Using the general population equation \ref{eq:Nc}, the derivation of all of its terms (see equation \ref{eq:Nliving}, \ref{eq:Nwork}), one can derive the general form for the generated income for a given element of the menu $L$ as,
-\begin{eqnarray}
-    R_{pop}(t|L) &=& N_{c}(t) R(t | L) \\ \nonumber
-      &=&  A \left( \rho S_{\mathrm{eff}} + \sum_{k,i} (N_{k,i} - N^{0}_{k,i}) I(r_i) \right) W(t) Y(t) p(L) \mathcal{P}(t|L) 
-\end{eqnarray}
-with $k \in \{s,w\}$, the ensemble of students and workers locations.
-In traditional financial planning incomes are considered over some period (eg. per month) such that it is required to integrate the function over that period $\Delta t$. Furthermore, the whole restaurant income must be calculated in order to later on determine the revenues. Thus a sum over all of the menu items is necessary, which gives,
+\paragraph{Competition limit.}
+If the focal restaurant competes with \( n_r \) comparable restaurants inside the same catchment area, and if \( n_r \) counts competitors only, then a conservative equal-quality approximation is
 \begin{equation}
-    \mathcal{R}(\Delta t) = \int^{\Delta t}_0 A \sum_L \left( \rho S_{\mathrm{eff}} + \sum_{k,i} (N_{k,i} - N^{0}_{k,i}) I(r_i) \right) W(t) Y(t) p(L) \mathcal{P}(t|L) \,dt ,
+\label{eq:A-competition}
+    A_g^{(\mathrm{comp})} \simeq \frac{1}{n_r + 1}.
 \end{equation}
-which is the final relation for the revenues.
+This relation is not a law; it is a limiting-case approximation obtained when the restaurants are almost interchangeable and the available customer demand is divided roughly evenly among them.
 
-\section{Expenses and Incomes} \label{sec:5}
-
-Accounting for expenses is relatively simple and well documented. In traditional financial planning, the expenses are usually separated into four categories,
-\begin{itemize}
-    \item[1.] Production costs
-    \item[2.] Recurring expenses
-    \item[3.] Fix or one-time costs
-    \item[4.] Personel costs
-\end{itemize}
-Production costs are commonly defined as a percentage of the income due to the fact that these correspond to the raw material costs required to produce a specific quantity of sold product. Thus,
+\paragraph{Reference model.}
+For the reference model, we assume that the factorized attractiveness terms vary slowly enough to be treated as time-constant effective parameters over the planning horizon. Time-varying preference shocks can still be absorbed into the more general modulation \( M_g(t) \) if needed. In the reference model, the temporal modulation is further factorized into daily, weekly, and yearly components,
 \begin{equation}
-    E^{(prod)}(t, L) = R_{pop}(t,L) \frac{c(L)}{{p}(L)},
+\label{eq:Nc-separable}
+    N_c(t) = \sum_{g \in \mathcal{G}} N_g(t) A_g D_g(\tau_d) W_g(\tau_w) Y_g(\tau_y),
 \end{equation}
-with $c(L)$ the cost of production. In addition, if payements are made with electronic payement methods, some incurring fees have to be accounted for,
+where \( \tau_d = t \bmod 24\,\mathrm{h} \), \( \tau_w = t \bmod 7\,\mathrm{d} \), and \( \tau_y = t \bmod 1\,\mathrm{y} \). When parameter count must be reduced, one may collapse this to a shared structure,
 \begin{equation}
-    E^{(fees)} = F^{(fees)} R_{pop}(t, L),
+\label{eq:Nc-baseline}
+    N_c(t) = A N_{tot}(t) D(\tau_d) W(\tau_w) Y(\tau_y).
 \end{equation}
-with $F^{(fees)} \simeq 2\%$.
-A probabilistic model is here implemented in order to acccount from the fact that clients may pay by different means of payment. Currently, only cash (no fees) or electroic payment are considered, with adjustable respective probabilities.
+This compact form is convenient, but the document keeps the group-dependent version as the conceptual reference.
 
-Recurring expenses correspond to utilities costs. These will be refered as $E^{rec}$. The main ones are (but not limited to),
-\begin{itemize}
-    \item[-] Rental,
-    \item[-] Software,
-    \item[-] Electricity, gas, water, waste,
-    \item[-] Council and strata fees,
-    \item[-] Marketing,
-    \item[-] Book Keeping,
-    \item[-] Others such as budget for maintenance (broken dishes, chair, etc...) and repairs.
-\end{itemize}
+\subsection{Spatial influence and effective area}
+\label{sec:spatial}
 
+The number of residents, workers, or transit users that belong to the accessible reservoir depends on space. The most general object is an anisotropic influence kernel \( I_g(r,\theta) \), which depends on radial distance, direction, terrain, road structure, and effective mobility.
 
-As for the staff expenses, it (obviously) refers to the personel wages $E^{(staff)}$. On a restaurant, the minimum staff must be,
-\begin{itemize}
-    \item[-] Chef
-    \item[-] Waitress
-    \item[-] Manager/Accountant.
-\end{itemize}
-Here, the role of the accountant and of the manager may or may not be separated depending on the workload.
-
-The total expenses are the sum of all these expenses sources for over a specific period,
+For the living population, the general expression is
 \begin{equation}
-    E_{tot}(\Delta t) = \sum_L \int^{\Delta t}_0 \left(E^{(prod)} + E^{(fees)}\right) \, dt + \Delta t\left(\sum_i  E^{(rec)}_i/\Delta t^{(rec)} + \sum_j  E^{(staff)}_j/\Delta t^{(staff)}\right).
+\label{eq:Nliving-general}
+    N_l = \int_0^{2\pi} \int_0^{\infty} \rho_l(r,\theta) I_l(r,\theta) r \, dr \, d\theta,
 \end{equation}
+where \( \rho_l(r,\theta) \) is the local residential density. In the reference model we now assume a uniform local density \( \rho_l \) and an isotropic kernel \( I_l(r,\theta) = I_l(r) \).
 
-\section{Study case} \label{sec:6}
+\paragraph{Gaussian reference kernel.}
+The reference kernel is chosen to be Gaussian and peak-normalized,
+\begin{equation}
+\label{eq:kernel-gaussian}
+    I_l(r) = \exp\left(-\frac{r^2}{2 R_{\mathrm{eff},l}^2}\right), \qquad I_l(0) = 1.
+\end{equation}
+It is important not to confuse peak normalization with integral normalization. Equation \ref{eq:kernel-gaussian} is not a probability density over space; it is a dimensionless reach kernel whose peak value is one.
 
-To be written.
- \begin{figure}
- \begin{center}
-\includegraphics[angle=0, scale=0.5]{graphics/Fig_breakfast.jpg}
-\includegraphics[angle=0, scale=0.5]{graphics/Fig_main_afternoon.jpg}
-\caption{(Example of revenue, costs and incomes for breakfasts and main launch as a function of the day of the week and for the first week of January.}
-\end{center}
+The corresponding effective area is
+\begin{equation}
+\label{eq:Seff}
+    S_{\mathrm{eff},l} = \int_0^{2\pi} \int_0^{\infty} I_l(r) r \, dr \, d\theta = 2\pi R_{\mathrm{eff},l}^2.
+\end{equation}
+Therefore the living population reservoir becomes
+\begin{equation}
+\label{eq:Nliving-baseline}
+    N_l = \rho_l S_{\mathrm{eff},l} = 2\pi R_{\mathrm{eff},l}^2 \rho_l.
+\end{equation}
+In the reference model, local residents are treated as a time-invariant reservoir to first order, so \( N_l(t) \approx N_l \) over the planning horizon unless a separate residential time modulation is introduced. If a probability-normalized kernel is preferred, one may instead use \( I_l / S_{\mathrm{eff},l} \), but then the interpretation of the integral changes and an external area scale must be reintroduced elsewhere. For the present document, peak normalization is retained for the spatial kernel.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\linewidth]{graphics/fig_population_schematic.png}
+\hfill
+\includegraphics[width=0.48\linewidth]{graphics/fig_kernel_comparison.png}
+\caption{Left: conceptual schematic of the population reservoir, the restaurant, nearby work sites, and the effective spatial reach. Right: comparison of three radial kernels. The Gaussian kernel is retained in the reference formulation because it is smooth and analytically tractable.}
+\label{fig:spatial-concepts}
 \end{figure}
 
- \begin{figure}
- \begin{center}
-\includegraphics[angle=0, scale=0.5]{graphics/Fig_Jan.jpg}
-\caption{(Example of total revenue, costs and incomes as a function of the day of the week and for the first week of Januar.}
-\end{center}
+\paragraph{Working population.}
+A working or studying site is better modeled as a discrete reservoir. Let \( N_{w,i}(t) \) be the total number of workers or students at site \( i \), and let \( N^{(0)}_{w,i}(t) \) denote the subset already counted among the local residents. The practical reference form is
+\begin{equation}
+\label{eq:Nworking}
+    N_w(t) = \sum_{i=1}^{n_w} \left(N_{w,i}(t) - N^{(0)}_{w,i}(t)\right) I_w(r_i).
+\end{equation}
+This is a compact de-duplication rule: residents who also work nearby are not double-counted when constructing the accessible reservoir. In the practical study cases, we write \( N^{(0)}_{w,i}(t) = \phi_i N_{w,i}(t) \), where \( \phi_i \in [0,1] \) is the commute-overlap fraction of site \( i \). More detailed versions could replace \( \phi_i \) by an overlap integral between residential density and work-site catchment structure.
+
+\paragraph{Transit population.}
+Transit demand deserves a separate term in the general theory. It may arise from tourists, transport hubs, beaches, or other non-resident flows. In a full model one would infer \( N_{tr}(t) \) from local pedestrian flux or transport exposure. In the reference study case below, the clean limit \( N_{tr}(t)=0 \) is kept first, and a small transit extension is discussed afterward.
+
+\paragraph{Alternative kernels.}
+The Gaussian reference kernel is not the only possible choice. An exponential kernel has a longer tail and may better reflect corridors or sparse catchments; a hard cutoff is easy to explain but introduces a non-smooth boundary. Figure \ref{fig:spatial-concepts} is therefore not merely decorative: it clarifies why the Gaussian choice is retained in the reference formulation while keeping alternatives visible for later refinements.
+
+\subsection{Daily, weekly, and yearly modulation}
+\label{sec:temporal}
+
+Demand varies across several recurring timescales. The most general object is a non-separable modulation \( M_g(t) \) in equation \ref{eq:Nc-general}. This is conceptually clean but often too rich for analytical work. The reference approximation is therefore the separable form of equation \ref{eq:Nc-separable}.
+
+\paragraph{Daily kernel.}
+The daily component carries the rate interpretation in the reference model. We define it so that its integral over one day yields an expected number of visits per accessible person,
+\begin{equation}
+\label{eq:D-normalization}
+    \int_0^{24\,\mathrm{h}} D_g(\tau_d) \, d\tau_d = \nu_g,
+\end{equation}
+where \( \nu_g \) is the expected number of daily meal opportunities or visits for group \( g \). A practical parametric form is a sum of Gaussian meal peaks,
+\begin{equation}
+\label{eq:D-gaussian}
+    D_g(\tau_d) = \frac{\nu_g}{Z_g} \sum_{m=1}^{M_g^{(\mathrm{meal})}} a_{g,m} \exp\left(-\frac{(\tau_d - \mu_{g,m})^2}{2 \sigma_{g,m}^2}\right),
+\end{equation}
+with normalization constant
+\begin{equation}
+\label{eq:D-Z}
+    Z_g = \int_0^{24\,\mathrm{h}} \sum_{m=1}^{M_g^{(\mathrm{meal})}} a_{g,m} \exp\left(-\frac{(\tau_d - \mu_{g,m})^2}{2 \sigma_{g,m}^2}\right) d\tau_d.
+\end{equation}
+This choice preserves a simple analytical description of repeated meal peaks while keeping the daily structure explicit.
+
+\paragraph{Weekly and yearly envelopes.}
+The weekly and yearly components should modulate the daily kernel without changing its physical units. A coherent reference convention is therefore
+\begin{equation}
+\label{eq:W-normalization}
+    \frac{1}{T_w} \int_0^{T_w} W_g(\tau_w) \, d\tau_w = 1, \qquad T_w = 7\,\mathrm{d},
+\end{equation}
+and
+\begin{equation}
+\label{eq:Y-normalization}
+    \frac{1}{T_y} \int_0^{T_y} Y_g(\tau_y) \, d\tau_y = 1, \qquad T_y = 365\,\mathrm{d}.
+\end{equation}
+With this convention, \( W_g \) and \( Y_g \) are dimensionless envelopes and \( D_g \) retains the full rate interpretation.
+
+A practical weekly envelope can be written as day-of-week weights renormalized to unit mean,
+\begin{equation}
+\label{eq:W-example}
+    W_g(\tau_w) = \frac{\omega_{g,d(\tau_w)}}{\frac{1}{7} \sum_{k=1}^{7} \omega_{g,k}},
+\end{equation}
+where \( d(\tau_w) \) is the day-of-week index. Such a weekly modulation can be constructed by repeating the daily template and weighting the days of the week appropriately.
+
+A simple yearly envelope is
+\begin{equation}
+\label{eq:Y-example}
+    Y_g(\tau_y) = A_{y,g} - D_{y,g} \cos\left(\frac{2\pi \tau_y}{P_g} + \phi_g\right), \qquad A_{y,g} > D_{y,g} \ge 0.
+\end{equation}
+This is intentionally simple. Holidays, events, or weather shocks can later be added as local pulses or exogenous corrections on top of this yearly envelope.
+
+\begin{table}[H]
+\centering
+\caption{Normalization choices for the temporal modulators.}
+\label{tab:normalization}
+\begin{tabularx}{\linewidth}{|p{3cm}|p{4cm}|X|}
+\hline
+Choice & Definition & Comment \\
+\hline
+Full integral normalization & Each of \( D, W, Y \) integrates to one over its own period. & Mathematically elegant, but the product \( D W Y \) then needs an extra intensity scale to recover a rate. \\
+\hline
+Mixed normalization (reference) & \( D \) integrates to \( \nu \); \( W \) and \( Y \) have mean one over their period. & Best compromise for theory plus implementation: \( D \) carries the units, \( W \) and \( Y \) remain interpretable envelopes. \\
+\hline
+Peak normalization & Each component is normalized so that its maximum equals one. & Useful for plotting and rough comparisons, but poor for integrated quantities. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\linewidth]{graphics/fig_timescale_decomposition.png}
+\hfill
+\includegraphics[width=0.48\linewidth]{graphics/fig_daily_patterns.png}
+\caption{Left: schematic of the general-to-practical decomposition from a population reservoir to a time-dependent arrival rate. Right: example daily kernels for a weekday and a weekend day.}
+\label{fig:temporal-overview}
 \end{figure}
 
- \begin{figure}
- \begin{center}
-\includegraphics[angle=0, scale=0.5]{graphics/Fig_Year.jpg}
-\caption{(Example of monthly revenue, costs and incomes for the study case.}
-\end{center}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\linewidth]{graphics/fig_weekly_pattern.png}
+\hfill
+\includegraphics[width=0.48\linewidth]{graphics/fig_yearly_pattern.png}
+\caption{Example weekly and yearly envelopes used in the worked examples. In the reference convention the daily kernel carries the units, while the weekly and yearly curves have unit mean over their own period.}
+\label{fig:weekly-yearly}
 \end{figure}
 
+\section{Menu, baskets, and expected spend}
+\label{sec:menu}
 
-%\section{Conclusion} \label{sec:7}
+The menu is not only a list of prices. It is a time-dependent random object because basket composition changes across services and across customer groups. The correct starting point is therefore the basket distribution itself.
 
-%\bibliographystyle{plain}
-%\bibliography{refs}
-%\nocite{*}
+\subsection{General basket model}
+\label{sec:menu-general}
+
+Let \( L \) index menu items and let \( \mathbf{n} = (n_L)_L \) denote the random basket associated with one arriving customer at time \( t \). The most general object is the conditional basket distribution \( \Pi(\mathbf{n}|t) \), with \( n_L \) in \( \mathbb{N} \). The expected spend per customer at time \( t \) is then
+\begin{equation}
+\label{eq:pbar-general}
+    \bar{p}(t) = \sum_{\mathbf{n}} \Pi(\mathbf{n}|t) \sum_L n_L p_L,
+\end{equation}
+and the expected production cost per customer is
+\begin{equation}
+\label{eq:cbar-general}
+    \bar{c}(t) = \sum_{\mathbf{n}} \Pi(\mathbf{n}|t) \sum_L n_L c_L.
+\end{equation}
+This formulation keeps multi-item purchases in the theory from the outset. It is therefore the appropriate reference formulation for the present document.
+
+\subsection{Practical approximation used for analysis}
+\label{sec:menu-practical}
+
+The full basket distribution is usually too large to parameterize directly. A practical reduction is to work with per-item expected multiplicities or, under a stronger assumption, with at-most-one-unit Bernoulli probabilities. Let \( \pi_L(t) \) denote the probability that one unit of item \( L \) is included in the basket at time \( t \). Under the at-most-one-unit approximation,
+\begin{equation}
+\label{eq:pbar-practical}
+    \bar{p}(t) = \sum_L p_L \pi_L(t), \qquad \bar{c}(t) = \sum_L c_L \pi_L(t).
+\end{equation}
+This reduced description preserves a tractable connection between service-dependent choice probabilities and expected monetary flows.
+
+A service-specific parameterization can be written as
+\begin{equation}
+\label{eq:pi-service}
+    \pi_L(t) = q_L s_{\sigma(L)}(\tau_d),
+\end{equation}
+where \( q_L \) is an item-level inclusion probability over the day, \( \sigma(L) \) identifies the relevant service, and \( s_{\sigma} \) is a normalized service-time profile satisfying
+\begin{equation}
+\label{eq:service-profile}
+    \int_0^{24\,\mathrm{h}} s_{\sigma}(\tau_d) \, d\tau_d = 1.
+\end{equation}
+The general multi-item theory is therefore reduced to a manageable special case without losing interpretability.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\linewidth]{graphics/fig_menu_time_profiles.png}
+\hfill
+\includegraphics[width=0.48\linewidth]{graphics/fig_revenue_pipeline.png}
+\caption{Left: illustrative service-specific menu time profiles. Right: conceptual pipeline from population reservoir to customer flow, expected spend, revenue, expenses, and profit.}
+\label{fig:menu-pipeline}
+\end{figure}
+
+\section{Revenue, expenses, and profit}
+\label{sec:revenues-expenses}
+
+\subsection{Expected revenue}
+\label{sec:revenues}
+
+With the notation above, the expected revenue rate is simply the customer arrival rate multiplied by the expected spend per customer,
+\begin{equation}
+\label{eq:revenue-rate}
+    r(t) = N_c(t) \bar{p}(t).
+\end{equation}
+The expected revenue over a horizon \( \Delta t \) is therefore
+\begin{equation}
+\label{eq:revenue-total}
+    \mathcal{R}(\Delta t) = \int_0^{\Delta t} N_c(t) \bar{p}(t) \, dt.
+\end{equation}
+This is a proper equality, not a proportionality. The normalization choices are carried by \( D, W, Y \) and by the basket model itself; there is no missing multiplicative constant.
+
+A discrete-time approximation with step \( \delta t \) is
+\begin{equation}
+\label{eq:revenue-discrete}
+    \mathcal{R}(\Delta t) \approx \sum_{n=0}^{N-1} N_c(t_n) \bar{p}(t_n) \delta t,
+\end{equation}
+where \( t_n = n \delta t \) and \( N \delta t = \Delta t \). This provides a natural discrete approximation for numerical evaluation.
+
+\subsection{Production cost and payment fees}
+\label{sec:costs-variable}
+
+The expected production-cost rate is
+\begin{equation}
+\label{eq:Eprod}
+    e_{\mathrm{prod}}(t) = N_c(t) \bar{c}(t),
+\end{equation}
+so that
+\begin{equation}
+\label{eq:Eprod-total}
+    E_{\mathrm{prod}}(\Delta t) = \int_0^{\Delta t} N_c(t) \bar{c}(t) \, dt.
+\end{equation}
+
+If several payment methods are available, with method probabilities \( \alpha_m(t) \) and fee fractions \( f_m \), the expected fee factor is
+\begin{equation}
+\label{eq:fee-factor}
+    \bar{f}(t) = \sum_m \alpha_m(t) f_m,
+\end{equation}
+and the corresponding fee expense is
+\begin{equation}
+\label{eq:Efees}
+    E_{\mathrm{fees}}(\Delta t) = \int_0^{\Delta t} N_c(t) \bar{p}(t) \bar{f}(t) \, dt.
+\end{equation}
+The deterministic expectation of equation \ref{eq:Efees} is the natural analytical object. If desired, one may later replace it with a stochastic simulation of payment choices.
+
+\subsection{Recurring, staff, and fixed costs}
+\label{sec:costs-fixed}
+
+Recurring costs are most naturally expressed as rates. Let \( r_i \) be the recurring expense rate associated with item \( i \) (rent, software, utilities, marketing, accounting, and so on). Then
+\begin{equation}
+\label{eq:Erec}
+    E_{\mathrm{rec}}(\Delta t) = \sum_i r_i \Delta t.
+\end{equation}
+
+Staff costs can be written either from hourly schedules or from average staffing rates. If staff member \( j \) is paid \( w_j \) per hour and works \( h_j(\Delta t) \) hours during the horizon,
+\begin{equation}
+\label{eq:Estaff}
+    E_{\mathrm{staff}}(\Delta t) = \sum_j w_j h_j(\Delta t).
+\end{equation}
+
+The most general model also includes fixed or one-time costs. If \( F_k \) denotes the one-time expense associated with event \( k \), then
+\begin{equation}
+\label{eq:Efix}
+    E_{\mathrm{fix}}(\Delta t) = \sum_{k \in \mathcal{K}(\Delta t)} F_k,
+\end{equation}
+where \( \mathcal{K}(\Delta t) \) is the set of fixed-cost events occurring within the horizon. A reduced operating model may omit this term intentionally, but the general model should keep it explicit.
+
+The total expense model is therefore
+\begin{equation}
+\label{eq:Etot}
+    E_{\mathrm{tot}}(\Delta t) = E_{\mathrm{prod}}(\Delta t) + E_{\mathrm{fees}}(\Delta t) + E_{\mathrm{rec}}(\Delta t) + E_{\mathrm{staff}}(\Delta t) + E_{\mathrm{fix}}(\Delta t),
+\end{equation}
+and expected income / profit is
+\begin{equation}
+\label{eq:profit}
+    \mathcal{I}(\Delta t) = \mathcal{R}(\Delta t) - E_{\mathrm{tot}}(\Delta t).
+\end{equation}
+
+\section{Study cases}
+\label{sec:study-case}
+
+The figures used in this section are generated from external scripts and parameter files documented in Appendix B and cited explicitly in the bibliography. The purpose of the first example is pedagogical. The second one is richer and introduces a more detailed set of assumptions while preserving analytical readability. The optional transit sensitivity remains explicit: the first figures use \( N_{tr}=0 \), and a small nonzero transit term, such as 5\%, can be examined as a secondary scenario.
+
+\subsection{Pedagogical example}
+\label{sec:study-case-pedagogical}
+
+The pedagogical example uses a single shared customer group and no transit component. It is intended to clarify the meaning of the formulas before richer heterogeneity is introduced.
+
+\begin{table}[H]
+\centering
+\caption{Pedagogical example used to illustrate the reference equations.}
+\label{tab:pedagogical}
+\begin{tabularx}{\linewidth}{|p{3.8cm}|p{2.9cm}|X|}
+\hline
+Parameter & Value & Interpretation \\
+\hline
+\( N_{tot} \) & 220 persons & Single shared accessible reservoir. \\
+\hline
+\( A \) & 0.18 & Product of competition, visibility, and offer-fit factors. \\
+\hline
+\( \nu \) & 1.0 day\( ^{-1} \) & One expected daily visit opportunity per accessible person. \\
+\hline
+Daily peaks & 8h, 13h, 19h & Breakfast, lunch, and dinner structure. \\
+\hline
+Weekly weights & \shortstack{$[0.95, 1.00, 1.00, 1.00,$\\$1.05, 1.20, 1.15]$} & Higher envelope from Friday to Sunday. \\
+\hline
+Yearly envelope & \( 1.0 - 0.12 \cos(2\pi \tau_y / 365\,\mathrm{d}) \) & Mild annual variation. \\
+\hline
+Transit term & 0 & Clean limit case. \\
+\hline
+\end{tabularx}
+\end{table}
+
+In this first example, the menu is reduced to a few representative items with clear service assignments. The main purpose is to connect equations \ref{eq:Nc-baseline}, \ref{eq:pbar-practical}, and \ref{eq:revenue-total} to directly readable plots.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\linewidth]{graphics/Fig_breakfast.png}
+\hfill
+\includegraphics[width=0.48\linewidth]{graphics/Fig_main_afternoon.png}
+\caption{Pedagogical example: time-resolved revenue, cost, and profit contributions for two representative services. These plots are meant to be simple enough to translate later into property-style tests or narrow numerical checks.}
+\label{fig:pedagogical-services}
+\end{figure}
+
+\subsection{Richer example}
+\label{sec:study-case-rich}
+
+The second example keeps the same structure but introduces a richer set of scales and parameters. In particular, it uses a Gaussian spatial kernel, a radius inferred from travel time and travel speed, a competition factor based on \( n_r \), and a simple harmonic yearly envelope.
+
+\begin{table}[H]
+\centering
+\caption{Richer example with parameters chosen to remain close to the richer analytical setting considered here.}
+\label{tab:richer}
+\begin{tabularx}{\linewidth}{|p{4.5cm}|p{2.4cm}|X|}
+\hline
+Parameter & Value & Interpretation \\
+\hline
+Residential density \( \rho_l \) & 442 persons / km\( ^2 \) & Same order of magnitude as the current setup file. \\
+\hline
+Effective travel time radius & 10 min & Baseline mobility horizon. \\
+\hline
+Travel speed & 4 km / h & Gives \( R_{\mathrm{eff}} \approx 0.67 \) km. \\
+\hline
+Competition count \( n_r \) & 20 & Gives \( A^{(\mathrm{comp})} \approx 1/21 \). \\
+\hline
+Working sites & 2 & One nearby work site and one farther education site. \\
+\hline
+Commute overlap fraction & 15\% & Removes the part already counted in residents. \\
+\hline
+Transit term & 0, then 5\% extension & Limit case first, small extension second. \\
+\hline
+Daily visit scale \( \nu \) & 1.0 day\( ^{-1} \) & Baseline average. \\
+\hline
+Yearly envelope & simple cosine family & Matches the chosen harmonic family before adding holiday pulses. \\
+\hline
+\end{tabularx}
+\end{table}
+
+Using equations \ref{eq:Nliving-baseline} and \ref{eq:Nworking}, this richer example remains analytically readable while already matching the spatial structure more clearly. It therefore provides a natural richer counterpart to the pedagogical case.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\linewidth]{graphics/Fig_Jan.png}
+\hfill
+\includegraphics[width=0.48\linewidth]{graphics/Fig_Year.png}
+\caption{Richer example: total revenue, total costs, and profit over a monthly window and over an annual summary. The optional 5\% transit extension can be explored as a sensitivity layer without changing the general structure of the model.}
+\label{fig:richer-summary}
+\end{figure}
+
+\section{Discussion and practical limits}
+\label{sec:discussion}
+
+The revised model is intentionally layered. The general form keeps the conceptual objects clear: population reservoir, conversion structure, temporal modulation, basket model, and expense decomposition. The reference model then chooses a Gaussian spatial kernel, a separable daily-weekly-yearly structure, and a compact basket approximation because these assumptions remain analytically tractable while preserving the main mechanisms of interest.
+
+Several limitations remain explicit. The separable temporal structure remains an approximation, and holidays, events, or weather shocks may introduce couplings between timescales that are absent from the reference formulation. The factorization of attractiveness likewise assumes an approximate orthogonality between several interpretable effects; this may cease to be adequate when competition, accessibility, and customer preferences become strongly dependent on one another. The practical menu approximation also ignores within-basket correlations unless the full basket distribution is retained. Finally, transit demand remains strongly location-dependent, and the reduced operating view may omit one-time costs when attention is restricted to short-run operation, even though the general expense equation keeps them explicitly.
+
+These limitations are not flaws of presentation. They indicate the directions in which the theoretical framework can be refined once additional data, constraints, or modeling priorities are introduced.
+
+\appendix
+
+\section{Appendix A: analytical summary for numerical realization}
+\label{sec:appendix-implementation}
+
+Although the present article is purely theoretical, it is useful to isolate the analytical blocks that any later numerical realization would have to reproduce. The first block concerns the spatial sector, namely the evaluation of the Gaussian influence kernel, its associated effective area, and the construction of the living and working reservoirs. The second block concerns temporal modulation, that is, the normalization of the daily meal-peak superposition together with the weekly and yearly envelopes. The third block concerns the basket description, where the general multi-item formulation may be reduced to expected item-level contributions when a simpler approximation is desired. The fourth block concerns the aggregation stage, in which arrival rates, expected spend, and expense rates are integrated over the chosen horizon. In that sense, the theory naturally decomposes into a spatial block, a temporal block, a basket block, and an aggregation block, each of which can later be translated into a concrete numerical procedure without modifying the equations themselves.
+
+\section{Appendix B: figure reproducibility}
+\label{sec:appendix-figures}
+
+All figures referenced in this article are meant to be reproducible. The external script responsible for figure generation and the associated parameter file are treated here as bibliographic objects and cited accordingly \cite{theory-figure-script,theory-figure-params}. In practice, reproducibility requires three ingredients: a parameter file defining the pedagogical and richer examples, a script that generates the conceptual figures and numerical plots, and a stable output location in which the generated graphics are written before compilation. If one wishes to examine the transit sensitivity separately, the same external material can be reused with a modified transit contribution. This bibliographic traceability preserves the scientific status of the document itself while keeping the numerical material externally identifiable and reproducible.
+
+\bibliographystyle{plain}
+\bibliography{references}
 
 \end{document}

@@ -1,0 +1,42 @@
+{
+  "script": "scripts/generate_theory_figures.py",
+  "params": "scripts/theory_figure_params.json",
+  "outputs": {
+    "fig_population_schematic": [
+      "graphics/fig_population_schematic.png",
+      "graphics/fig_population_schematic.svg"
+    ],
+    "fig_kernel_comparison": [
+      "graphics/fig_kernel_comparison.png",
+      "graphics/fig_kernel_comparison.svg"
+    ],
+    "fig_timescale_decomposition": [
+      "graphics/fig_timescale_decomposition.png",
+      "graphics/fig_timescale_decomposition.svg"
+    ],
+    "fig_revenue_pipeline": [
+      "graphics/fig_revenue_pipeline.png",
+      "graphics/fig_revenue_pipeline.svg"
+    ],
+    "fig_daily_patterns": [
+      "graphics/fig_daily_patterns.png"
+    ],
+    "fig_weekly_pattern": [
+      "graphics/fig_weekly_pattern.png"
+    ],
+    "fig_yearly_pattern": [
+      "graphics/fig_yearly_pattern.png"
+    ],
+    "fig_menu_time_profiles": [
+      "graphics/fig_menu_time_profiles.png"
+    ],
+    "service_figures": [
+      "graphics/Fig_breakfast.png",
+      "graphics/Fig_main_afternoon.png"
+    ],
+    "summary_figures": [
+      "graphics/Fig_Jan.png",
+      "graphics/Fig_Year.png"
+    ]
+  }
+}

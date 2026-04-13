@@ -56,13 +56,17 @@ def manyGauss_fct(x, params, x_truncate=[]):
                 have 3 parameters: (0) A height, (1) mean and (2) standard deviation
         x_truncate: 2-elements array/list. If defined, returns 0 below/above the min/max values
     '''
-    r=0
+    scalar_input = np.isscalar(x)
+    x_arr = np.atleast_1d(np.asarray(x, dtype=float))
+    r = np.zeros_like(x_arr, dtype=float)
     for p in params:
-        r=r + p[0]*np.exp(-(x-p[1])**2/(2*p[2]**2))
+        r = r + p[0]*np.exp(-(x_arr-p[1])**2/(2*p[2]**2))
     if len(x_truncate) == 2:
-        f=np.where(np.bitwise_and(x < x_truncate[0], x > x_truncate[1]))[0]
-        if f != []:
+        f=np.where(np.bitwise_or(x_arr < x_truncate[0], x_arr > x_truncate[1]))[0]
+        if f.size != 0:
             r[f]=0
+    if scalar_input:
+        return float(r[0])
     return r
 
 def Norm_manyGauss_fct(params, x_truncate=[], range_int=[0,24], limit_precision=1e-3):
@@ -135,9 +139,7 @@ def weekly_fct(setup, weekly_day="all"):
     time=np.linspace(0, 24*7., 7*Npts_24h + 1)# The weekly timeserie is in hours
     afluence=np.zeros(7*Npts_24h + 1)
     if weekly_day != "weekdays" and weekly_day != "weekends" and weekly_day != "all":
-        print("Error: Unrocognized keyword weekly_day = ", weekly_day)
-        print("       Debug required. The program will exit now")
-        exit(-1)
+        raise ValueError(f"Unrecognized keyword weekly_day={weekly_day!r}. Expected one of: 'weekdays', 'weekends', 'all'.")
     #
     # --- For each day, generate the Base function for the daily afluence and append it to the weekly timeseries ---
     xmin=0
@@ -175,8 +177,7 @@ def yearly_modulation(setup, time, unit='hour'):
     if unit == "hour": # We convert into years because the yearly function has parameters given in years
         t_compute = time/(365.*24.)
     if unit != "hour" and unit != "year":
-        print("Error in yearly_modulation: You need to specifiy unit as either 'hour' or 'year'")
-        exit()
+        raise ValueError("yearly_modulation(): unit must be either 'hour' or 'year'")
     #
     if setup["yearly_function"]["func"] == "default":
         #Npts_24h=int(np.ceil(24/setup["model_resolution"]))
@@ -188,11 +189,9 @@ def yearly_modulation(setup, time, unit='hour'):
         #time=np.linspace(0,1, Npts_1y + 1)
         model=Amp_max- Dy*np.cos(2*np.pi*t_compute/Period + phase)
     else:
-        print("Error: Type of function used for the yearly modulation not recognized:", setup["yearly_function"]["func"])
-        print("       Supported function(s):")
-        print("             - default")
-        print("The program will exit now")
-        exit(-1)
+        raise ValueError(
+            f"Unsupported yearly modulation function: {setup['yearly_function']['func']!r}. Supported: 'default'."
+        )
     return time, model
 
 def yearly_fct(setup, weekly_day="all"):
